@@ -79,7 +79,7 @@ internal class dbConnection
     }
 
     //המרה של הקריאה שחזרה למילון עם שורות של מפתח וערך
-    private TableType Parse(MySqlDataReader reader)
+    private static TableType Parse(MySqlDataReader reader)
     {
         var rows = new TableType();
         using (reader)
@@ -102,7 +102,7 @@ internal class dbConnection
     }
 
     //יצירת פקודה ומחזירה טבלה
-    public TableType Execute(string sql)
+    public static TableType Execute(string sql)
     {
         MySqlCommand command = CreateCommand(sql);
         MySqlDataReader reader = Send(Connect(), command);
