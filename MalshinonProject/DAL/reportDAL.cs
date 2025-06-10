@@ -1,31 +1,52 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 using MySql.Data.MySqlClient;
+using MalshinonProject.DAL;
 
 namespace MalshinonProject.DAL;
 
-public class reportDAL
+internal static class reportDAL
 {
     public static void SubmitIntelReport(MySqlConnection connection, int reporterId)
     {
-        // קבלת טקסט הדיווח מהמשתמש
+        // קבלת טקסט הדיווח מהמשתמש עם שם של מדוווח
         Console.WriteLine("Enter your intel report (mention a person like: John Smith):");
         string reportText = Console.ReadLine()!;
 
         // חיפוש שם פרטי + משפחה 
         var nameMatch = Regex.Match(reportText, @"\b[A-Z][a-z]+\s[A-Z][a-z]+\b");
-
         if (!nameMatch.Success)
         {
             Console.WriteLine("No valid target name found in the report.");
             return;
         }
 
-        string extractedFullName = nameMatch.Value;
-        TextInfo textInfo = CultureInfo.CurrentCulture.TextInfo;
-        string targetFullName = textInfo.ToTitleCase(extractedFullName.ToLower());
+        string targetFullName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(nameMatch.Value.ToLower());
+        int targetId = personDAL.GetPersonIdByFullName(connection, targetFullName);
 
+        if (targetId == -1)
+        {
+            Console.Write($"Enter secret code for new target '{targetFullName}': ");
+            string code = Console.ReadLine()!;
+            targetId = personDAL.InsertPerson(connection, targetFullName, code, "target");
+        }
 
+        // מוסיף דיווח לטבלה, מעדכן מונים ומריץ לוג
+        string insertSql = @"
+            INSERT INTO IntelReports (reporter_id, target_id, text)
+            VALUES (@reporter, @target, @text)";
+        using var cmd = new MySqlCommand(insertSql, connection);
+        cmd.Parameters.AddWithValue("@reporter", reporterId);
+        cmd.Parameters.AddWithValue("@target", targetId);
+        cmd.Parameters.AddWithValue("@text", reportText);
+        cmd.ExecuteNonQuery();
+
+        personDAL.UpdateReportsCount(connection, reporterId);
+        personDAL.UpdateMentionsCount(connection, targetId);
+        Logger.WriteLog($"Report submitted: {reporterId} → {targetId}");
+    }
+}
+/*
         //בדיקה האם האדם כבר קיים
         string selectSql = "SELECT id FROM People WHERE CONCAT(first_name, ' ', last_name) = @name LIMIT 1";
         using var selectCmd = new MySqlCommand(selectSql, connection);
@@ -70,5 +91,6 @@ public class reportDAL
         intelCmd.ExecuteNonQuery();
 
         Console.WriteLine("Intel report submitted successfully.");
-    }  
 }
+    */ 
+

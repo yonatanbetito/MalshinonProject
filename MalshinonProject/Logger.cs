@@ -1,23 +1,14 @@
 
 using System.IO;
 
-namespace MalshinonProject
+namespace MalshinonProject;
+
+internal class Logger
 {
-    public static class Logger
+    // רושם הודעה לקובץ הלוג
+    public static void WriteLog(string message)
     {
-        public static void Log(string message)
-        {
-            string logEntry = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {message}";
-            Console.WriteLine(logEntry);
-            File.AppendAllText("log.txt", logEntry + Environment.NewLine);
-        }
-        public static string Read()
-        {
-            if (!File.Exists("log.txt"))
-            {
-                return string.Empty;
-            }
-            return File.ReadAllText("log.txt");
-        }
+        string log = $"{DateTime.Now}: {message}";
+        File.AppendAllText("log.txt", log + Environment.NewLine);
     }
 }

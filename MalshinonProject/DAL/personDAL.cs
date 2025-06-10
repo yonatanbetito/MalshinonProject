@@ -2,7 +2,77 @@ using MySql.Data.MySqlClient;
 
 namespace MalshinonProject.DAL;
 
-public class personDAL
+internal class personDAL
+{
+    
+    //מחפש אדם לפי שם מלא ומחזיר ID
+    public static int GetPersonIdByFullName(MySqlConnection connection, string fullName)
+    {
+        var parts = fullName.Split(' ');
+        if (parts.Length < 2) return -1;
+
+        string sql = "SELECT id FROM People WHERE first_name = @first AND last_name = @last";
+        using var cmd = new MySqlCommand(sql, connection);
+        cmd.Parameters.AddWithValue("@first", parts[0]);
+        cmd.Parameters.AddWithValue("@last", parts[1]);
+
+        var result = cmd.ExecuteScalar();
+        return result != null ? Convert.ToInt32(result) : -1;
+    } 
+    
+    //מוסיף אדם חדש לטבלה
+    public static int InsertPerson(MySqlConnection connection, string fullName, string code, string type)
+    {
+        var parts = fullName.Split(' ');
+        if (parts.Length < 2) return -1;
+        
+        string sql = @"
+            INSERT INTO People (first_name, last_name, secret_code, type)
+            VALUES (@first, @last, @code, @type)";
+        using var cmd = new MySqlCommand(sql, connection);
+        cmd.Parameters.AddWithValue("@first", parts[0]);
+        cmd.Parameters.AddWithValue("@last", parts[1]);
+        cmd.Parameters.AddWithValue("@code", code);
+        cmd.Parameters.AddWithValue("@type", type);
+        cmd.ExecuteNonQuery();
+        
+        return (int)cmd.LastInsertedId;
+    }
+    
+    //מעדכן מספר דיווחים על אדם
+    public static void UpdateReportsCount(MySqlConnection connection, int personId)
+    {
+        string sql = "UPDATE People SET num_reports = num_reports + 1 WHERE id = @id";
+        using var cmd = new MySqlCommand(sql, connection);
+        cmd.Parameters.AddWithValue("@id", personId);
+        cmd.ExecuteNonQuery();
+    }
+    
+    //עדכן את מספר דיווחים שדיווחו (עליו)
+  public static void UpdateMentionsCount(MySqlConnection conn, int personId)
+    {
+    string sql = "UPDATE People SET num_mentions = num_mentions + 1 WHERE id = @id";
+    using var cmd = new MySqlCommand(sql, conn);
+    cmd.Parameters.AddWithValue("@id", personId);
+    cmd.ExecuteNonQuery();
+    }
+} 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*public class personDAL
 {
     //מזהה אדם לפי שם מלא במידה לא קיים יוצרת אותו כ-reporter עם קוד סודי
     public static int IdentifyOrCreatePerson(MySqlConnection connection, string fullName)
@@ -48,3 +118,4 @@ public class personDAL
         }
     }
 }
+*/
