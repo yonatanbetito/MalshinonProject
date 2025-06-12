@@ -7,7 +7,7 @@ namespace MalshinonProject;
 
 using TableType = List<Dictionary<string, object?>>;
 
-internal class dbConnection
+internal class DBConnection
 {
     // פונקציה שמתחברת לבסיס נתונים ומחזירה את החיבור
     public static MySqlConnection Connect(string? connectionStringInput = null)
